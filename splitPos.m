@@ -11,5 +11,6 @@ switch pos
     case 4
         imOut = imIn(31:60,181:360);
 end
+imOut = imOut(:)';
 end
 
