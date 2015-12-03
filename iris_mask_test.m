@@ -3,8 +3,6 @@ testImage = double(testImage)/255;
 groundtruth = double(groundtruth)./255;
 
 x = split(testImage,nn.size(1,1));
-% [x, mu, sigma] = zscore(x);
-% groundtruth = normalize(groundtruth, mu, sigma);
 
 n = nn.n;
 m = size(x, 1);

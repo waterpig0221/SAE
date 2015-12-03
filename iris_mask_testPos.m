@@ -1,70 +1,77 @@
-function correct_rate = iris_mask_testPos(nn, testImage, groundtruth,threshold)
+function correct_rate = iris_mask_testPos(nn, testImage, groundtruth, countOpt, threshold, Pos, option)
 testImage = double(testImage)/255;
 groundtruth = double(groundtruth)./255;
-A = zeros(60,360);
-for Pos=1:4
-    nn_part = nn{Pos,1}{Pos,1};
-    x = splitPos(testImage,Pos);
-    % [x, mu, sigma] = zscore(x);
-    % groundtruth = normalize(groundtruth, mu, sigma);
+
+x = splitPos(testImage,Pos,option);
+% [x, mu, sigma] = zscore(x);
+% groundtruth = normalize(groundtruth, mu, sigma);
+
+n = nn.n;
+m = size(x, 1);
+x = [ones(m,1) x];
+nn.a{1} = x;
+
+for i = 2 : n-1
     
-    n = nn_part.n;
-    m = size(x, 1);
-    x = [ones(m,1) x];
-    nn_part.a{1} = x;
-    
-    for i = 2 : n-1
-        
-        % Calculate the unit's outputs (including the bias term)
-        nn_part.a{i} = sigm(nn_part.a{i - 1} * nn_part.W{i - 1}');
-        %dropout
-        if(nn_part.dropoutFraction > 0)
-            if(nn_part.testing)
-                nn_part.a{i} = nn_part.a{i}.*(1 - nn_part.dropoutFraction);
-            else
-                nn_part.dropOutMask{i} = (rand(size(nn_part.a{i}))>nn_part.dropoutFraction);
-                nn_part.a{i} = nn_part.a{i}.*nn_part.dropOutMask{i};
-            end
+    % Calculate the unit's outputs (including the bias term)
+    nn.a{i} = sigm(nn.a{i - 1} * nn.W{i - 1}');
+    %dropout
+    if(nn.dropoutFraction > 0)
+        if(nn.testing)
+            nn.a{i} = nn.a{i}.*(1 - nn.dropoutFraction);
+        else
+            nn.dropOutMask{i} = (rand(size(nn.a{i}))>nn.dropoutFraction);
+            nn.a{i} = nn.a{i}.*nn.dropOutMask{i};
         end
-        
-        %calculate running exponential activations for use with sparsity
-        if(nn_part.nonSparsityPenalty>0)
-            nn_part.p{i} = 0.99 * nn_part.p{i} + 0.01 * mean(nn_part.a{i}, 1);
-        end
-        %Add the bias term
-        nn_part.a{i} = [ones(m,1) nn_part.a{i}];
-        nn_part.a{n} = sigm(nn_part.a{n - 1} * nn_part.W{n - 1}');
-        
     end
     
-    % hypothese = patchMerge(nn.a{1,5}',nn.size(1,1));
-    % test = hypothese > threshold;
-    % test = ~(xor(test,(groundtruth(1:60,1:360)./255)));
-    % correct_rate = size(find(test),1) / (60*360);
-    
-    hypothese = nn_part.a{1,n}';
-    % hypothese2 = hypothese./countMatrix;
-    hypothese = reshape(hypothese,[30 180]);
-    test = hypothese > threshold;
-    switch Pos
-        case 1
-            A(1:30,1:180) = hypothese;
-            test = ~(xor(test,groundtruth(1:30,1:180)));
-        case 2
-            A(1:30,181:360) = hypothese;
-            test = ~(xor(test,groundtruth(1:30,181:360)));
-        case 3
-            A(31:60,1:180) = hypothese;
-            test = ~(xor(test,groundtruth(31:60,1:180)));
-        case 4
-            A(31:60,181:360) = hypothese;
-            test = ~(xor(test,groundtruth(31:60,181:360)));
+    %calculate running exponential activations for use with sparsity
+    if(nn.nonSparsityPenalty>0)
+        nn.p{i} = 0.99 * nn.p{i} + 0.01 * mean(nn.a{i}, 1);
     end
-    correct_rate = size(find(test),1) / (30*180);
+    %Add the bias term
+    nn.a{i} = [ones(m,1) nn.a{i}];
+    nn.a{n} = sigm(nn.a{n - 1} * nn.W{n - 1}');
+    
 end
 
-subplot(4,1,1),imshow(groundtruth,[]);
-subplot(4,1,2),imshow(testImage);
-subplot(4,1,3),imshow(A,[]);
-subplot(4,1,4),imshow(A>threshold);
+% hypothese = patchMerge(nn.a{1,5}',nn.size(1,1));
+% test = hypothese > threshold;
+% test = ~(xor(test,(groundtruth(1:60,1:360)./255)));
+% correct_rate = size(find(test),1) / (60*360);
+
+if countOpt == 8
+    load countMatrix\countPos
+elseif countOpt == 16
+    load countMatrix\count16
+elseif countOpt ==32
+    load countMatrix\count32
+end
+hypothese = patchMergePos(nn.a{1,5}',nn.size(1,1));
+
+switch Pos
+    case 1
+        hypothese2 = hypothese./countMatrix;
+        test = hypothese2 > threshold;
+        test = ~(xor(test,groundtruth(1:30,1:180)));
+    case 2
+        hypothese2 = hypothese./countMatrix;
+        test = hypothese2 > threshold;
+        test = ~(xor(test,groundtruth(1:30,181:360)));
+    case 3
+        hypothese2 = hypothese./countMatrix;
+        test = hypothese2 > threshold;
+        test = ~(xor(test,groundtruth(31:60,1:180)));
+    case 4
+        hypothese2 = hypothese./countMatrix;
+        test = hypothese2 > threshold;
+        test = ~(xor(test,groundtruth(31:60,181:360)));
+end
+
+correct_rate = size(find(test),1) / (30*180);
+
+subplot(4,1,1),imshow(groundtruth(1:30,181:360),[]);
+subplot(4,1,2),imshow(testImage(1:30,181:360));
+subplot(4,1,3),imshow(hypothese2,[]);
+subplot(4,1,4),imshow(hypothese2>threshold);
 end

@@ -23,10 +23,10 @@ for j=1:trainNum
             sae.ae{i}.activation_function       = 'sigm';
             sae.ae{i}.learningRate              = 0.01;
             sae.ae{i}.inputZeroMaskedFraction   = 0.5;
-            opts.numepochs =   50;
-            %opts.batchsize = 353;           % if input patch size is 64
+            opts.numepochs =   10;
+            opts.batchsize = 353;           % if input patch size is 64
 %             opts.batchsize = 345;           % if input patch size is 256
-            opts.batchsize = 329;           % if input patch size is 1024
+%             opts.batchsize = 329;           % if input patch size is 1024
         end
     end
     train_x = double(imread([xDir xName{j,:}]))/255;
@@ -52,10 +52,10 @@ for i=1:size(N,2)-2
     nn.W{i} = sae.ae{i}.W{1};
 end
 % Train the FFNN
-opts.numepochs =   50;
-%opts.batchsize = 353;           % if input patch size is 64
+opts.numepochs =   10;
+opts.batchsize = 353;           % if input patch size is 64
 % opts.batchsize = 345;           % if input patch size is 256
-opts.batchsize = 329;           % if input patch size is 1024
+% opts.batchsize = 329;           % if input patch size is 1024
 for j = 1:trainNum
     train_x = double(imread([xDir xName{j,:}]))/255;
     train_x = split(train_x,N(1));
