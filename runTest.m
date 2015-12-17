@@ -10,7 +10,6 @@ for i=1:size(xName,1)
     im = imread(str);
     im2 = imread(str2);
     correct = iris_mask_test(nn,im,im2, 8,threshold);
-%     correct = iris_mask_testPos(nn,im,im2,8,threshold,2,2);
     sum = sum + correct;
 end
 avg = sum/size(xName,1);

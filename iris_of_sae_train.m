@@ -7,7 +7,7 @@ function nn = iris_of_sae_train(N,trainNum)
 % test_y  = double(test_y);
 % flag = 0;
 %load Data
-load DataName;
+load partialDataName;
 if size(xName,1) ~= trainNum
     xName = xName(1:trainNum,:);
     yName = yName(1:trainNum,:);
@@ -46,7 +46,7 @@ disp('NN fine-tune');
 
 nn = nnsetup(N);
 nn.activation_function              = 'sigm';
-nn.learningRate                     = 0.01;
+nn.learningRate                     = 0.1;
 
 for i=1:size(N,2)-2
     nn.W{i} = sae.ae{i}.W{1};
